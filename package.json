@@ -1,0 +1,99 @@
+{
+  "name": "@farming-labs/strata",
+  "version": "0.1.0",
+  "description": "Rust-powered static HTML fragments for React Server Components.",
+  "keywords": [
+    "react",
+    "rsc",
+    "react-server-components",
+    "flight",
+    "rust",
+    "html",
+    "server-rendering",
+    "performance"
+  ],
+  "license": "MIT",
+  "author": "Strata contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/farming-labs/strata.git"
+  },
+  "homepage": "https://github.com/farming-labs/strata#readme",
+  "bugs": {
+    "url": "https://github.com/farming-labs/strata/issues"
+  },
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./react-server": {
+      "types": "./react-server.d.ts",
+      "default": "./react-server.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "react-server.js",
+    "react-server.d.ts",
+    "binding.js",
+    "binding.d.ts",
+    "*.node",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20.17.0"
+  },
+  "napi": {
+    "binaryName": "strata",
+    "packageName": "@farming-labs/strata",
+    "targets": [
+      "aarch64-apple-darwin",
+      "x86_64-apple-darwin",
+      "x86_64-pc-windows-msvc",
+      "aarch64-pc-windows-msvc",
+      "x86_64-unknown-linux-gnu",
+      "aarch64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl",
+      "aarch64-unknown-linux-musl"
+    ]
+  },
+  "scripts": {
+    "build": "napi build --platform --release --strip --js binding.js --dts binding.d.ts --js-package-name @farming-labs/strata",
+    "build:debug": "napi build --platform --js binding.js --dts binding.d.ts --js-package-name @farming-labs/strata",
+    "format": "cargo fmt && prettier --write .",
+    "lint": "cargo fmt --check && cargo clippy --all-targets -- -D warnings && prettier --check .",
+    "test": "pnpm test:rust && pnpm build:debug && pnpm test:node && pnpm test:types",
+    "test:rust": "cargo test --all-targets",
+    "test:node": "node --test test/*.test.mjs",
+    "test:types": "tsc --noEmit",
+    "bench": "pnpm build && node benchmarks/render.mjs",
+    "prepack": "pnpm build"
+  },
+  "peerDependencies": {
+    "react": ">=19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "3.8.0",
+    "@types/react": "^19.2.17",
+    "prettier": "3.9.6",
+    "react": "^19.2.4",
+    "typescript": "^7.0.2"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "packageManager": "pnpm@10.9.0",
+  "sideEffects": false
+}

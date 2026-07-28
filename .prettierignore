@@ -1,0 +1,7 @@
+binding.js
+binding.d.ts
+node_modules
+target
+*.node
+pnpm-lock.yaml
+Cargo.lock
