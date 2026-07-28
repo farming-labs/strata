@@ -1,12 +1,9 @@
 import { readFile } from "node:fs/promises";
 
-import { configuredPlatforms } from "./platforms.mjs";
+import { configuredPackageNames } from "./platforms.mjs";
 
 const packageJson = JSON.parse(await readFile("package.json", "utf8"));
-const packageNames = [
-  packageJson.name,
-  ...configuredPlatforms(packageJson).map(({ packageName }) => packageName),
-];
+const packageNames = configuredPackageNames(packageJson);
 
 const checks = await Promise.all(
   packageNames.map(async (packageName) => {

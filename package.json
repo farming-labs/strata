@@ -74,12 +74,13 @@
     "test:types": "tsc --noEmit",
     "bench": "pnpm build && node benchmarks/render.mjs",
     "pack:local": "pnpm build && npm pack --ignore-scripts",
-    "release:latest": "pnpm release:preflight && bumpp package.json --all --release patch --commit \"release: {tag}\" --tag \"v{version}\" --execute \"pnpm release:prepare\"",
-    "release:beta": "pnpm release:preflight && bumpp package.json --all --release prerelease --preid beta --commit \"release: {tag}\" --tag \"v{version}\" --execute \"pnpm release:prepare\"",
+    "release:latest": "node scripts/release.mjs latest",
+    "release:beta": "node scripts/release.mjs beta",
     "release:preflight": "node scripts/release-preflight.mjs",
     "release:prepare": "node scripts/sync-version.mjs && node scripts/check-version-unpublished.mjs && pnpm test && pnpm lint",
     "release:metadata": "node scripts/release-metadata.mjs",
     "release:artifacts:verify": "node scripts/verify-release-artifacts.mjs",
+    "release:published:verify": "node scripts/check-version-published.mjs",
     "prepublishOnly": "napi pre-publish --tag-style npm"
   },
   "peerDependencies": {
