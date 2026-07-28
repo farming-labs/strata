@@ -73,7 +73,14 @@
     "test:node": "node --test test/*.test.mjs",
     "test:types": "tsc --noEmit",
     "bench": "pnpm build && node benchmarks/render.mjs",
-    "prepack": "pnpm build"
+    "pack:local": "pnpm build && npm pack --ignore-scripts",
+    "release:latest": "pnpm release:preflight && bumpp package.json --all --release patch --commit \"release: {tag}\" --tag \"v{version}\" --execute \"pnpm release:prepare\"",
+    "release:beta": "pnpm release:preflight && bumpp package.json --all --release prerelease --preid beta --commit \"release: {tag}\" --tag \"v{version}\" --execute \"pnpm release:prepare\"",
+    "release:preflight": "node scripts/release-preflight.mjs",
+    "release:prepare": "node scripts/sync-version.mjs && node scripts/check-version-unpublished.mjs && pnpm test && pnpm lint",
+    "release:metadata": "node scripts/release-metadata.mjs",
+    "release:artifacts:verify": "node scripts/verify-release-artifacts.mjs",
+    "prepublishOnly": "napi pre-publish --tag-style npm"
   },
   "peerDependencies": {
     "react": ">=19.0.0"
@@ -86,6 +93,7 @@
   "devDependencies": {
     "@napi-rs/cli": "3.8.0",
     "@types/react": "^19.2.17",
+    "bumpp": "12.1.0",
     "prettier": "3.9.6",
     "react": "^19.2.4",
     "typescript": "^7.0.2"
