@@ -27,3 +27,10 @@ export function configuredPlatforms(packageJson) {
     };
   });
 }
+
+export function configuredPackageNames(packageJson) {
+  return [
+    packageJson.name,
+    ...configuredPlatforms(packageJson).map(({ packageName }) => packageName),
+  ];
+}

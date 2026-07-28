@@ -126,7 +126,7 @@ pnpm bench
 
 ## Releases
 
-Stable and beta releases are versioned with `bumpp`, built for every supported native target, tested and published through GitHub Actions. See [RELEASING.md](./RELEASING.md) for the one-time npm setup and release commands.
+Stable and beta releases use one end-to-end command to version with `bumpp`, build and test every supported native target in GitHub Actions, publish all npm packages, and verify their dist-tags. See [RELEASING.md](./RELEASING.md) for the one-time npm setup and release commands.
 
 ## Scope
 
