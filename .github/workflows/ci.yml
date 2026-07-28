@@ -31,4 +31,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm test
-      - run: npm pack --dry-run
+      - run: pnpm build
+      - run: git diff --exit-code -- binding.js binding.d.ts
+      - run: npm pack --dry-run --ignore-scripts

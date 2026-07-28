@@ -124,6 +124,10 @@ pnpm bench
 
 `render(document)` includes JavaScript-to-JSON encoding. Frameworks that already store the Strata document as encoded JSON can use `renderJson(documentJson)` to avoid encoding the same object repeatedly.
 
+## Releases
+
+Stable and beta releases are versioned with `bumpp`, built for every supported native target, tested and published through GitHub Actions. See [RELEASING.md](./RELEASING.md) for the one-time npm setup and release commands.
+
 ## Scope
 
 Strata is suitable for large, non-interactive content regions. Standard React rendering remains the correct representation for:

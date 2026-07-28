@@ -1,0 +1,251 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  CARGO_INCREMENTAL: "0"
+
+jobs:
+  validate:
+    name: Validate release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10.9.0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Require a tag from main
+        run: |
+          git fetch origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/release-metadata.mjs "$GITHUB_REF_NAME"
+      - run: node scripts/check-version-unpublished.mjs
+      - run: pnpm lint
+      - run: pnpm test
+
+  build:
+    name: Build ${{ matrix.target }}
+    needs: validate
+    runs-on: ${{ matrix.host }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - host: macos-latest
+            target: aarch64-apple-darwin
+            command: pnpm build --target aarch64-apple-darwin
+          - host: macos-latest
+            target: x86_64-apple-darwin
+            command: pnpm build --target x86_64-apple-darwin
+          - host: windows-latest
+            target: x86_64-pc-windows-msvc
+            command: pnpm build --target x86_64-pc-windows-msvc
+          - host: windows-latest
+            target: aarch64-pc-windows-msvc
+            command: pnpm build --target aarch64-pc-windows-msvc
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            command: pnpm build --target x86_64-unknown-linux-gnu --use-napi-cross
+          - host: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            command: pnpm build --target aarch64-unknown-linux-gnu --use-napi-cross
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            command: pnpm build --target x86_64-unknown-linux-musl --cross-compile
+            zig: true
+          - host: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            command: pnpm build --target aarch64-unknown-linux-musl --cross-compile
+            zig: true
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10.9.0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            ~/.napi-rs
+            target/
+          key: release-${{ matrix.target }}-${{ hashFiles('Cargo.lock') }}
+
+      - uses: mlugg/setup-zig@v2
+        if: matrix.zig
+        with:
+          version: 0.14.1
+
+      - uses: taiki-e/install-action@v2
+        if: matrix.zig
+        with:
+          tool: cargo-zigbuild
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build native binding
+        run: ${{ matrix.command }}
+        shell: bash
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: bindings-${{ matrix.target }}
+          path: strata.*.node
+          if-no-files-found: error
+          retention-days: 1
+
+  test-native:
+    name: Test ${{ matrix.target }}
+    needs: build
+    runs-on: ${{ matrix.host }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - host: macos-latest
+            target: aarch64-apple-darwin
+            architecture: arm64
+          - host: macos-latest
+            target: x86_64-apple-darwin
+            architecture: x64
+          - host: windows-latest
+            target: x86_64-pc-windows-msvc
+            architecture: x64
+          - host: windows-11-arm
+            target: aarch64-pc-windows-msvc
+            architecture: arm64
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            architecture: x64
+          - host: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            architecture: arm64
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            architecture: x64
+            container: node:24-alpine
+          - host: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-musl
+            architecture: arm64
+            container: node:24-alpine
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10.9.0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          architecture: ${{ matrix.architecture }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: bindings-${{ matrix.target }}
+          path: .
+
+      - name: Test native binding
+        if: ${{ !matrix.container }}
+        run: pnpm test:node
+
+      - name: Test native binding in musl
+        if: matrix.container
+        run: >-
+          docker run --rm
+          --volume "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE"
+          --workdir "$GITHUB_WORKSPACE"
+          ${{ matrix.container }}
+          node --test test/api.test.mjs
+
+  publish:
+    name: Publish to npm
+    needs:
+      - validate
+      - build
+      - test-native
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10.9.0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - run: npm install --global npm@11.5.1
+      - run: pnpm install --frozen-lockfile
+
+      - name: Read release metadata
+        id: release
+        run: node scripts/release-metadata.mjs "$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+
+      - run: pnpm exec napi create-npm-dirs
+
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+
+      - run: pnpm exec napi artifacts --output-dir artifacts --npm-dir npm
+      - run: pnpm release:artifacts:verify
+
+      - name: Publish root and platform packages
+        run: npm publish --access public --tag "${{ steps.release.outputs.dist-tag }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_TAG: ${{ steps.release.outputs.dist-tag }}

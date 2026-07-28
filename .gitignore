@@ -1,8 +1,6 @@
 /node_modules
 /target
 /*.node
-/binding.js
-/binding.d.ts
 /npm
 *.log
 .DS_Store
