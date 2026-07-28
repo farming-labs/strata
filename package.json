@@ -1,6 +1,6 @@
 {
   "name": "@farming-labs/strata",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Rust-powered static HTML fragments for React Server Components.",
   "keywords": [
     "react",
