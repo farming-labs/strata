@@ -1,0 +1,6 @@
+*.cjs linguist-detectable=false
+*.js linguist-detectable=false
+*.mjs linguist-detectable=false
+
+binding.js linguist-generated=true
+binding.d.ts linguist-generated=true
