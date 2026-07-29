@@ -30,7 +30,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
-      - run: pnpm test
+      - name: Run unit, type, and package E2E tests
+        run: pnpm test
       - run: pnpm build
       - run: git diff --exit-code -- binding.js binding.d.ts
       - run: npm pack --dry-run --ignore-scripts
