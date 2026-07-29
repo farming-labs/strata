@@ -70,7 +70,7 @@
     "lint": "cargo fmt --check && cargo clippy --all-targets -- -D warnings && prettier --check .",
     "test": "pnpm test:rust && pnpm build:debug && pnpm test:node && pnpm test:e2e && pnpm test:types",
     "test:rust": "cargo test --all-targets",
-    "test:node": "node --test test/*.test.mjs",
+    "test:node": "node --test test/api.test.mjs test/release.test.mjs",
     "test:e2e": "node --test test/e2e.mjs",
     "test:types": "tsc --noEmit",
     "bench": "pnpm build && node benchmarks/render.mjs",
@@ -98,6 +98,7 @@
     "bumpp": "12.1.0",
     "prettier": "3.9.6",
     "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "typescript": "^7.0.2"
   },
   "publishConfig": {

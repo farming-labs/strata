@@ -135,6 +135,11 @@ pnpm lint
 pnpm bench
 ```
 
+`pnpm test:e2e` packs Strata, installs it in a clean consumer project, and
+verifies the ESM and CommonJS entry points from native rendering through the
+final React-rendered HTML boundary. CI runs this flow on Linux, macOS and
+Windows.
+
 `render(document)` includes JavaScript-to-JSON encoding. Frameworks that already store the Strata document as encoded JSON can use `renderJson(documentJson)` to avoid encoding the same object repeatedly.
 
 ## Releases
