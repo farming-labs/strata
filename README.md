@@ -22,6 +22,11 @@ This does not replace React Server Components or Flight. It gives an RSC framewo
 pnpm add @farming-labs/strata
 ```
 
+Install only `@farming-labs/strata`. It automatically installs and loads the
+native binary for the current operating system and CPU architecture. Packages
+named `@farming-labs/strata-*` are platform-specific optional dependencies and
+should not be installed directly.
+
 ## Render a document
 
 ```js
