@@ -16,6 +16,14 @@ typed content → Rust renderer → safe HTML → React-owned boundary
 
 This does not replace React Server Components or Flight. It gives an RSC framework an optimized representation for host-only regions such as articles, documentation, CMS content, code listings and large read-only descriptions.
 
+## Background
+
+Strata grew out of the representation-aware transport idea explored in
+[RSC or Raw Data? Designing a Representation-Aware UI Transport](https://www.kinfish.dev/articles/rsc-raw-data-and-the-transport-layer-we-are-missing).
+The package is a small experiment around one piece of that idea: carrying safe
+HTML fragments through a React-owned RSC boundary when a subtree does not need
+element-by-element React ownership.
+
 ## Install
 
 ```sh
