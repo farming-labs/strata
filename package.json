@@ -98,6 +98,7 @@
     "bumpp": "12.1.0",
     "prettier": "3.9.6",
     "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "typescript": "^7.0.2"
   },
   "publishConfig": {

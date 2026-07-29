@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { promisify } from "node:util";
@@ -46,8 +46,15 @@ function runNpm(args, options) {
 test("packed package works in a fresh consumer project", async () => {
   const workspace = await mkdtemp(join(tmpdir(), "strata-e2e-"));
   try {
+    await cp(new URL("./fixtures/consumer", import.meta.url), workspace, {
+      recursive: true,
+    });
+
     const reactPackage = await realpath(
       new URL("../node_modules/react", import.meta.url),
+    );
+    const reactDomPackage = await realpath(
+      new URL("../node_modules/react-dom", import.meta.url),
     );
 
     const { stdout } = await runNpm([
@@ -76,10 +83,6 @@ test("packed package works in a fresh consumer project", async () => {
     );
     const tarball = join(workspace, filename);
 
-    await writeFile(
-      join(workspace, "package.json"),
-      JSON.stringify({ name: "strata-e2e-consumer", private: true }, null, 2),
-    );
     await runNpm(
       [
         "install",
@@ -89,49 +92,17 @@ test("packed package works in a fresh consumer project", async () => {
         "--package-lock=false",
         tarball,
         `react@file:${reactPackage}`,
+        `react-dom@file:${reactDomPackage}`,
       ],
       { cwd: workspace },
     );
 
-    const smokeTest = `
-    import assert from "node:assert/strict";
-    import React from "react";
-    import { isRenderedFragment, render } from "@farming-labs/strata";
-    import { StaticFragment } from "@farming-labs/strata/react-server";
-
-    const rendered = render({
-      type: "document",
-      children: [
-        {
-          type: "element",
-          tag: "section",
-          attributes: { class: "intro" },
-          children: [{ type: "text", value: "Fresh install <works>" }],
-        },
-      ],
-    });
-
-    assert.equal(
-      rendered.html,
-      '<section class="intro">Fresh install &lt;works&gt;</section>',
-    );
-    assert.equal(isRenderedFragment(rendered), true);
-
-    const element = StaticFragment({ as: "section", content: rendered });
-    assert.equal(element.type, "section");
-    assert.equal(element.props["data-strata"], rendered.hash);
-    assert.deepEqual(element.props.dangerouslySetInnerHTML, {
-      __html: rendered.html,
-    });
-    assert.equal(React.isValidElement(element), true);
-  `;
-
-    const result = await run(
-      process.execPath,
-      ["--input-type=module", "--eval", smokeTest],
-      { cwd: workspace },
-    );
-    assert.equal(result.stderr, "");
+    for (const consumer of ["esm-consumer.mjs", "cjs-consumer.cjs"]) {
+      const result = await run(process.execPath, [consumer], {
+        cwd: workspace,
+      });
+      assert.equal(result.stderr, "");
+    }
   } finally {
     await rm(workspace, { force: true, recursive: true });
   }
