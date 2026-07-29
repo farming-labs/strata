@@ -192,6 +192,10 @@ jobs:
         if: ${{ !matrix.container }}
         run: pnpm test:node
 
+      - name: Test package installation end to end
+        if: ${{ !matrix.container }}
+        run: pnpm test:e2e
+
       - name: Test native binding in musl
         if: matrix.container
         run: >-
@@ -199,7 +203,7 @@ jobs:
           --volume "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE"
           --workdir "$GITHUB_WORKSPACE"
           ${{ matrix.container }}
-          node --test test/api.test.mjs
+          sh -c "node --test test/api.test.mjs && node --test test/e2e.mjs"
 
   publish:
     name: Publish to npm
